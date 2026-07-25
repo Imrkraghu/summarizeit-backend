@@ -1,0 +1,5 @@
+.venv
+.env
+nltk_resources/*
+keywords/*
+_pycache__/
