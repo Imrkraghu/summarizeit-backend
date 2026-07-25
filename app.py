@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 import os
 import nltk 
-from huggingface_hub import InferenceClient
+# from huggingface_hub import InferenceClient
 from dotenv import load_dotenv
 import wikipediaapi
 import speech_recognition as sr
@@ -12,11 +12,12 @@ async def summarizeit(q:str):
     return summarizer(q)
 async def summarizer(q:str):
     load_dotenv()
-    client = InferenceClient(
-    model="facebook/bart-large-cnn",
-    token=os.getenv("HF_TOKEN")
-    )
-    return (client.summarization(q))
+    # client = InferenceClient(
+    #     model="facebook/bart-large-cnn",
+    #     token=os.getenv("HF_TOKEN")
+    # )
+    # return (client.summarization(q))
+    return {"message": "Summarization functionality is currently disabled."}
 
 @app.get("/tokens")
 async def tokens(q:str):
