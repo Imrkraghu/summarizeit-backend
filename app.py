@@ -9,7 +9,7 @@ app = FastAPI()
 
 @app.get("/summarizeit")
 async def summarizeit(q:str):
-    return summarizer(q)
+    return await summarizer(q)
 async def summarizer(q:str):
     load_dotenv()
     client = InferenceClient(
@@ -107,7 +107,6 @@ async def main(querry:str | None = None):
             print("No summary available skipping for next keyword")
             continue
         else:
-            for keyword in keyword_list:
                 print(f"Summary for the keyword {keyword} is available,\n")
                 summaries[keyword] = response
-    return summaries
+    return {"summaries": summaries}
