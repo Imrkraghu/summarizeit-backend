@@ -142,7 +142,7 @@ async def main(querry:str | None = None):
     return {"summaries": summaries}
 
 
-@app.post("process/")
+@app.post("/process/")
 async def run_summarizer_pipeline(audio_file: UploadFile = File(...)):
     for folder in ["recordings", "transcriptions", "keywords"]:
         os.makedirs(os.path.join("media", folder), exist_ok=True)
