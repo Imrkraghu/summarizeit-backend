@@ -19,17 +19,12 @@ It is designed for developers and researchers who want to quickly convert spoken
 ## 📂 Project Structure
 ```
 Project-Summarizeit/
-│── backend/
-│   ├── app.py                # FastAPI entry point
-│   ├── summarizer.py         # Core pipeline functions
-│   ├── transcriber.py        # Audio transcription logic
-│   └── utils/                # Helpers (cache, keyword filtering)
+│
+├── app.py                # FastAPI entry point
 │── media/
 │   ├── recordings/           # Saved audio files
 │   ├── transcriptions/       # Text transcriptions
 │   └── keywords/             # Extracted keyword files
-│── data/
-│   └── dataset.csv           # Keyword validation dataset
 │── requirements.txt          # Python dependencies
 │── README.md                 # Documentation
 ```
