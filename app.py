@@ -57,7 +57,7 @@ async def wikisearch(q:str):
     usermail = os.getenv("PROJECT_MAIL")
     wiki_wiki = wikipediaapi.Wikipedia( user_agent = f"{username} ({usermail})", language ='en')
     page_py = wiki_wiki.page(q)
-    if page_py.exists():
+    if page_py.exists() and len(page_py.summary) >30:
         return page_py.summary
     else:
         return "No summary found for the given query."
