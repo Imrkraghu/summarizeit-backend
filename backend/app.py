@@ -1,7 +1,7 @@
 from fastapi import FastAPI, UploadFile, File, Request
 from fastapi.middleware.cors import CORSMiddleware
-from pipeline import get_status, get_latest_results, stop_recording
-from summarizer import transcriber, extract_keywords_from_text as tokenization, wikisearch, summarizer, run_summarizer_pipeline
+from backend.pipeline import get_status, get_latest_results, stop_recording
+from backend.summarizer import transcriber, extract_keywords_from_text as tokenization, wikisearch, summarizer, run_summarizer_pipeline
 from fastapi.responses import JSONResponse
 
 app = FastAPI()
