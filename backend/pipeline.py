@@ -1,4 +1,4 @@
-from summarizer import (
+from backend.summarizer import (
     start_processing_threads, 
     audio_queue, 
     processing_threads,
@@ -159,10 +159,6 @@ async def stop_recording():
 
         collect_results_from_queue()
         final_data = format_response_data()
-
-        request.session['transcription'] = final_data["transcription"]
-        request.session['keywords'] = final_data["keywords"]
-        request.session['summaries'] = final_data["summaries"]
 
         processing_threads.clear()
         results_queue = None
