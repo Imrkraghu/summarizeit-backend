@@ -9,7 +9,6 @@ It is designed for developers and researchers who want to quickly convert spoken
 ## 🚀 Features
 - **Audio Transcription**: Converts `.wav` / `.webm` recordings into text using `speech_recognition`.
 - **Keyword Extraction**: Uses `NLTK` for tokenization, stopword removal, and frequency analysis.
-- **Keyword Validation**: Filters extracted keywords against a dataset (`dataset.csv`).
 - **Wikipedia Search**: Fetches summaries for valid keywords using `wikipediaapi`.
 - **Text Summarization**: Uses Hugging Face’s `facebook/bart-large-cnn` model for concise summaries.
 - **Pipeline Integration**: End-to-end function `run_summarizer_pipeline` handles transcription → keywords → summaries.
