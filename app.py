@@ -1,6 +1,7 @@
 from fastapi import FastAPI, UploadFile, File
 import os
 from fastapi.responses import JSONResponse
+from collections import Counter
 import nltk 
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
@@ -142,6 +143,60 @@ async def main(querry:str | None = None):
     return {"summaries": summaries}
 
 
+
+# Extract Keywords
+async def extract_keywords_from_text(query: str = None, transcription_file: str = None):
+    # Decide source of text
+    if transcription_file:
+        with open(transcription_file, "r") as file:
+            text = file.read()
+    elif query:
+        text = query
+    else:
+        raise ValueError("Either query or transcription_file must be provided")
+
+    # Tokenize and clean
+    NLTK_CUSTOM_PATH = os.path.join('nltk_resources')
+    os.makedirs(NLTK_CUSTOM_PATH, exist_ok=True)
+    nltk.data.path.append(NLTK_CUSTOM_PATH)
+    for resource in ['punkt', 'stopwords', 'punkt_tab']:
+        if not is_resource_available(f'tokenizers/{resource}') and not is_resource_available(f'corpora/{resource}'):
+            nltk.download(resource, download_dir=NLTK_CUSTOM_PATH)
+    words = word_tokenize(text)
+    words = [word.lower() for word in words if word.isalnum()]
+    stop_words = set(stopwords.words("english"))
+    filtered_words = [word for word in words if word not in stop_words]
+
+    # Frequency analysis
+    word_freq = Counter(filtered_words)
+    keywords = [kw for kw, _ in word_freq.most_common(10)]
+
+    # Save keywords only if a file path was passed
+    keywords_file = None
+    if transcription_file:
+        base_name = os.path.splitext(os.path.basename(transcription_file))[0]
+        keywords_file = os.path.join("media", "keywords", f"{base_name}_keywords.txt")
+        os.makedirs(os.path.dirname(keywords_file), exist_ok=True)
+        with open(keywords_file, "w") as file:
+            for keyword in keywords:
+                file.write(f"{keyword}\n")
+
+    print("Top keywords:", keywords)
+    return keywords
+
+# # Filter Keywords
+# def extract_valid_keywords(keywords_file):
+#     with open(keywords_file, "r") as file:
+#         keywords = [kw.strip() for kw in file.readlines()]
+#     dataset_path = os.path.join("data", "dataset.csv")
+#     df = pd.read_csv(dataset_path)
+#     valid_set = set()
+#     for column in df.columns:
+#         valid_set.update(df[column].dropna().str.lower().str.strip().tolist())
+#     filtered_keywords = [kw for kw in keywords if kw.lower() in valid_set]
+#     print("Filtered keywords:", filtered_keywords)
+#     return filtered_keywords
+
 @app.post("/process/")
 async def run_summarizer_pipeline(audio_file: UploadFile = File(...)):
     for folder in ["recordings", "transcriptions", "keywords"]:
@@ -157,29 +212,24 @@ async def run_summarizer_pipeline(audio_file: UploadFile = File(...)):
         print("No transcription available")
         return {"transcription": "", "keywords": [], "summaries": []}
 
-    filtered_keywords, keywords_file = await tokenization(transcription_file)
-    if not keywords_file:
-        print("No keyword file created")
-        return {"transcription": transcription, "keywords": [], "summaries": []}
-
+    filtered_keywords = await extract_keywords_from_text(transcription)
     if not filtered_keywords:
         print("No valid keywords found")
-        return {"transcription": transcription, "keywords": [], "summaries": []}
-
-    for keyword in filtered_keywords:
-        try:
-            summary = await wikisearch(keyword)
-            if summary == "No summary found for the given query.":
-                print(f"No summary available for {keyword}, skipping.")
-                continue
-            else:
-                summarized = summarizer(summary)
-            summaries.append({"keyword": keyword, "text": summarized})
-        except Exception as e:
-            print(f"Error while fetching summary for {keyword}: {e}")
+    else:
+        for keyword in filtered_keywords:
+            try:
+                print(f"Searching for Filtered keyword {keyword} in Wikipedia Database :")
+                searchresult = await wikisearch(keyword)
+                if searchresult == "No summary found for the given query.":
+                    print(f"No summary found on wikipedia for: {keyword}")
+                else:
+                    summary = await summarizer(searchresult)
+                    summaries.append({"keyword": keyword, "text": summary})
+            except Exception as e:
+                print(f"Error while fetching summary for {keyword}: {e}")
 
     return {
-        "transcription": transcription,
-        "keywords": filtered_keywords,
-        "summaries": summaries,
-    }
+            "transcription": transcription,
+            "keywords": filtered_keywords,
+            "summaries": summaries,
+        }
