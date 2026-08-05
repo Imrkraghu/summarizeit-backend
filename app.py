@@ -2,6 +2,8 @@ from fastapi import FastAPI, UploadFile, File
 import os
 from fastapi.responses import JSONResponse
 import nltk 
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
 from huggingface_hub import InferenceClient
 from dotenv import load_dotenv
 import wikipediaapi
@@ -138,3 +140,46 @@ async def main(querry:str | None = None):
                 print(f"Summary for the keyword {keyword} is available,\n")
                 summaries[keyword] = response
     return {"summaries": summaries}
+
+
+@app.post("process/")
+async def run_summarizer_pipeline(audio_file: UploadFile = File(...)):
+    for folder in ["recordings", "transcriptions", "keywords"]:
+        os.makedirs(os.path.join("media", folder), exist_ok=True)
+
+    summaries = []
+
+    result = await transcriber(audio_file)
+    transcription = result["text"]
+    transcription_file = result["file"]
+
+    if not transcription.strip() or not transcription_file:
+        print("No transcription available")
+        return {"transcription": "", "keywords": [], "summaries": []}
+
+    filtered_keywords, keywords_file = await tokenization(transcription_file)
+    if not keywords_file:
+        print("No keyword file created")
+        return {"transcription": transcription, "keywords": [], "summaries": []}
+
+    if not filtered_keywords:
+        print("No valid keywords found")
+        return {"transcription": transcription, "keywords": [], "summaries": []}
+
+    for keyword in filtered_keywords:
+        try:
+            summary = await wikisearch(keyword)
+            if summary == "No summary found for the given query.":
+                print(f"No summary available for {keyword}, skipping.")
+                continue
+            else:
+                summarized = summarizer(summary)
+            summaries.append({"keyword": keyword, "text": summarized})
+        except Exception as e:
+            print(f"Error while fetching summary for {keyword}: {e}")
+
+    return {
+        "transcription": transcription,
+        "keywords": filtered_keywords,
+        "summaries": summaries,
+    }
